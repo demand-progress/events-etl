@@ -9,7 +9,7 @@ from worker import conn
 sched = BlockingScheduler()
 
 @sched.scheduled_job('interval', minutes=30)
-def timed_for_aclu():
+def timed_for_teaminternet():
     print('Running Job for Team Internet')
     q = Queue(connection=conn)
     result = q.enqueue(teaminternet.queue, timeout=500)

@@ -84,7 +84,7 @@ def translate_data(cleaned_data):
     """
     This is where we translate the data to the necessary information for the map
     """
-    print(" -- Translating People Power Action")
+    print(" -- Translating Team Internet Action")
     translated_data = []
 
     for data in cleaned_data:

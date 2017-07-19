@@ -2,10 +2,7 @@
 
 from etl.teaminternet import action as teaminternet_action
 
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
-
-import boto
+import boto3
 import os
 import json
 import gzip
@@ -23,45 +20,21 @@ def run():
         f.write(raw)
 
     # START
-    aws_host = os.environ.get('AWS_HOST')
-    conn = S3Connection(host=aws_host)
-
-    bucket = conn.get_bucket('teaminternet-map-data')
-    key = bucket.get_key('output/teaminternet.js.gz')
-    key_raw = bucket.get_key('raw/teaminternet.json')
-
-    # Retrieve Keys
-    if key is None:
-        print("Creating New output file")
-        key = bucket.new_key('output/teaminternet.js.gz')
-
-    if key_raw is None:
-        print("Creating New Raw File")
-        key_raw = bucket.new_key('raw/teaminternet.json')
-
-    # Upload data to S3
-    print("Uploading RAW to S3")
-    key_raw.set_contents_from_filename('data/teaminternet.json')
-    key_raw.set_acl('public-read')
-
-    print("Uploading GZIP to S3")
-    key.set_metadata('Content-Type', 'text/plain')
-    key.set_metadata('Content-Encoding', 'gzip')
-    key.set_contents_from_filename('data/teaminternet.js.gz')
-    key.set_acl('public-read')
+    s3 = boto3.client('s3')
+    s3.upload_file('data/teaminternet.js.gz', 'teaminternet-map-data', 'output/teaminternet.js.gz', ExtraArgs={'ACL': 'public-read', "Metadata": {'Content-Type': 'text/plain', 'Content-Encoding': 'gzip'}})
+    s3.upload_file('data/teaminternet.json', 'teaminternet-map-data', 'raw/teaminternet.json', ExtraArgs={'ACL': 'public-read'})
 
     # Cloudfront Invalidation requests
-    print("Invalidating Team Internet Output")
-    cloudfront = boto.connect_cloudfront()
-    paths = ['/output/*']
-    inval_req = cloudfront.create_invalidation_request(u'EXFHJXIFH495H', paths)
+    # print("Invalidating Team Internet Output")
+    # cloudfront = boto.connect_cloudfront()
+    # paths = ['/output/*']
+    # inval_req = cloudfront.create_invalidation_request(u'EXFHJXIFH495H', paths)
 
     os.remove("data/teaminternet.js.gz")
     os.remove("data/teaminternet.json")
 
 
 # Retrieve all data
-
 
 def queue():
     run()

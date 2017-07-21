@@ -100,6 +100,7 @@ def translate_data(cleaned_data):
             continue
 
         event = {
+            'id': data['id'],
             'title': data[_TITLE] if _TITLE in data else None,
             'url': _PREURL + ("%d" % data['id']),
             'supergroup' : SUPER_GROUP,

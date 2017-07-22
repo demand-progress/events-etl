@@ -7,7 +7,7 @@ import datetime
 
 #const
 UNNECESSARY_ELEMENTS = ['campaign', 'confirmed_at', 'created_at', 'creator', 'directions',  \
-                        'ends_at', 'ends_at_utc', 'host_is_confirmed', 'max_attendees', \
+                        'ends_at', 'ends_at_utc', 'host_is_confirmed', \
                         'note_to_attendees', 'notes', 'phone', 'plus4', 'updated_at'\
                         ]
 SUPER_GROUP = 'TeamInternet'
@@ -115,7 +115,8 @@ def translate_data(cleaned_data):
             'venue': address,
             'lat': data['latitude'] if has_coords else None,
             'lng': data['longitude'] if has_coords else None,
-            'categories': ','.join(categories)
+            'categories': ','.join(categories),
+            'max_attendees': data['max_attendees']
         }
 
         translated_data.append(event)

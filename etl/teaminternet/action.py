@@ -7,7 +7,7 @@ import datetime
 
 #const
 UNNECESSARY_ELEMENTS = ['campaign', 'confirmed_at', 'created_at', 'creator', 'directions',  \
-                        'ends_at', 'ends_at_utc', 'fields', 'host_is_confirmed', 'max_attendees', \
+                        'ends_at', 'ends_at_utc', 'host_is_confirmed', 'max_attendees', \
                         'note_to_attendees', 'notes', 'phone', 'plus4', 'updated_at'\
                         ]
 SUPER_GROUP = 'TeamInternet'
@@ -84,7 +84,7 @@ def translate_data(cleaned_data):
     """
     This is where we translate the data to the necessary information for the map
     """
-    print(" -- Translating Team Internet Action")
+    print(" -- Translating Team Internet Event")
     translated_data = []
 
     for data in cleaned_data:
@@ -99,6 +99,11 @@ def translate_data(cleaned_data):
         if data['starts_at'][:10] < datetime.date.today().strftime('%Y-%m-%d'):
             continue
 
+        categories = []
+        for field in data['fields']:
+            if field['name'] == 'categories':
+                categories.append(field['value'])
+
         event = {
             'id': data['id'],
             'title': data[_TITLE] if _TITLE in data else None,
@@ -109,7 +114,8 @@ def translate_data(cleaned_data):
             'start_datetime': data[_STARTDATE] if _STARTDATE in data else None,
             'venue': address,
             'lat': data['latitude'] if has_coords else None,
-            'lng': data['longitude'] if has_coords else None
+            'lng': data['longitude'] if has_coords else None,
+            'categories': ','.join(categories)
         }
 
         translated_data.append(event)

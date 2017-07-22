@@ -116,7 +116,8 @@ def translate_data(cleaned_data):
             'lat': data['latitude'] if has_coords else None,
             'lng': data['longitude'] if has_coords else None,
             'categories': ','.join(categories),
-            'max_attendees': data['max_attendees']
+            'max_attendees': data['max_attendees'],
+            'attendee_count': data['attendee_count']
         }
 
         translated_data.append(event)

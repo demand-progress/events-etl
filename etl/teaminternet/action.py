@@ -44,6 +44,9 @@ def retrieve_and_clean_data():
 
     total_signups = 0
 
+    # XXX: for some reason AK is returning some duplicate events, so track and dont double include them
+    event_ids = []
+
     while has_more_content:
         offset = page * _LIMIT
         req = requests.get(event_endpoint + ("&_offset=%d" % offset), data={'_limit': _LIMIT}, headers={"Access": 'application/json'})
@@ -66,6 +69,12 @@ def retrieve_and_clean_data():
 
                 if not event["status"] == "active":
                     continue
+
+                # Skip events we already have
+                if event['id'] in event_ids:
+                    continue
+
+                event_ids.append(event['id'])
 
                 for unneeded_key in UNNECESSARY_ELEMENTS:
                     if unneeded_key in event:

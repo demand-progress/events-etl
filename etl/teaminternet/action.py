@@ -4,6 +4,11 @@ import os
 import requests
 import json
 import datetime
+import usaddress
+import urllib
+import dateutil
+from dateutil.tz import *
+import redis
 
 #const
 UNNECESSARY_ELEMENTS = ['campaign', 'confirmed_at', 'created_at', 'creator', 'directions',  \
@@ -21,11 +26,143 @@ _STARTDATE = 'starts_at'
 _PREURL = "https://act.demandprogress.org/event/action/"
 _LIMIT = 20
 
+# Town Hall Project
+TOWN_HALL_URL = "https://townhallproject-86312.firebaseio.com/townHalls.json"
+
 def grab_data():
     cleaned_data = retrieve_and_clean_data()
     translated_data = translate_data(cleaned_data)
 
+    retrieve_town_hall_events(cleaned_data)
+
     return translated_data
+
+def retrieve_town_hall_events(current_ak_events):
+    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+    redis_conn = redis.from_url(redis_url)
+
+    last_updated = redis_conn.get("town_hall_last_updated")
+
+    if last_updated:
+        print "Got last updated " + str(last_updated)
+        req = requests.get(TOWN_HALL_URL + '?print=pretty&orderBy=%22lastUpdated%22&startAt=' + str(last_updated))
+    else:
+        req = requests.get(TOWN_HALL_URL + '?print=pretty')
+        print "Set last updated = " + str(int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))
+        redis_conn.set("town_hall_last_updated", int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000))
+
+    if req.status_code != 200:
+        raise ValueError("Error in retrieving data from the Town Hall Project ", req.status_code, req.text)
+    else:
+        existing_town_hall_events_in_ak = {}
+        for e in current_ak_events:
+            for field in e['fields']:
+                if field['name'] == "town_hall_project_event_id" and field['value']:
+                    existing_town_hall_events_in_ak[field['value']] = e['id']
+
+        events = json.loads(req.text)
+        print "Total num events to import from the Town Hall Project = " + str(len(events))
+
+        for event_id in events:
+            event = events[event_id]
+
+            if event['meetingType'] not in ['Office Hours', "Town Hall", "Tele-Town Hall", "Empty Chair Town Hall"]:
+                continue
+
+            if "address" not in event:
+                print "Missing address: "
+                print event
+                print "\n"
+                continue
+
+            try:
+                parsed_address = usaddress.tag(event['address'])[0]
+            except usaddress.RepeatedLabelError as error:
+                print('Error parsing address: ' + repr(error))
+                print event
+                print "\n"
+                continue
+
+            # XXX: skipping tele town halls and other places without a street name for now because we require an address
+            if "ZipCode" not in parsed_address or "StreetName" not in parsed_address:
+                print "Bad address: "
+                print event
+                print "\n"
+                continue
+            street_address = (parsed_address['AddressNumber'] if "AddressNumber" in parsed_address else "") + " " + (parsed_address["StreetNamePreDirectional"] if "StreetNamePreDirectional" in parsed_address else "") + " " + (parsed_address['StreetName'] if "StreetName" in parsed_address else "") + " " + (parsed_address['StreetNamePostType'] if "StreetNamePostType" in parsed_address else "")
+
+            try :
+                event_start = dateutil.parser.parse(event['Date'] + " " + event["Time"] + (" " + event['timeZone'] if 'timeZone' in event else ""))
+            except ValueError as error:
+                print ("Error parsing datetime: " + repr(error))
+                print event
+                print "\n"
+                continue
+
+            if event_start < datetime.datetime.now(event_start.tzinfo): # ignore past events
+                continue
+
+            event_title = (event['eventName'] if ('eventName' in event) else event['meetingType']) + (" - " + event['Member'] if ("Member" in event) else "") + (" - " + event['District'] if ("District" in event) else "")
+            event_description = event_title + "\n"
+            if "Notes" in event:
+                event_description += event["Notes"]
+            if "timeEnd" in event and event['timeEnd']:
+                event_description += "\n\nEvent ends at " + event['timeEnd']
+            if "linkName" in event:
+                event_description += "\n\n" + event['linkName'] + ": " + event['link']
+
+            if event['eventId'] in existing_town_hall_events_in_ak:
+                # Update existing event in AK
+                akId = str(existing_town_hall_events_in_ak[event['eventId']])
+                ak_event = {
+                    "address1": street_address,
+                    "postal": parsed_address['ZipCode'],
+                    "public_description": event_description,
+                    "starts_at": event_start.strftime("%m/%d/%Y %I:%M"),
+                    'title': event_title,
+                    "venue": event['Location'] if "Location" in event else ""
+                }
+                action_endpoint = os.environ.get('ACTION_KIT_REST_URL') + "event/" + akId + "/"
+                print "Updating event  " + action_endpoint + " in AK: " + json.dumps(ak_event)
+                req = requests.patch(action_endpoint, data=json.dumps(ak_event), headers = {"Content-type": "application/json", "Access": 'application/json'})
+                if req.status_code > 299:
+                    raise ValueError("Error updating town hall event in Action Kit ", req.status_code, req.text, ak_event)
+                else:
+                    print "Successfully updated event! "
+            else:
+                # Add new event to AK
+                ak_event = {
+                    "page": "team-internet_create",
+                    "email": "support@demandprogress.org",
+                    "event_address1": street_address,
+                    "event_postal": parsed_address['ZipCode'] if "ZipCode" in parsed_address else "",
+                    "event_host_ground_rules": "1",
+                    "event_host_requirements": "1",
+                    "event_max_attendees": "5000",
+                    "event_public_description": event_description,
+                    "event_starts_at_ampm": event_start.strftime("%p"),
+                    "event_starts_at_date": event_start.strftime("%m/%d/%Y"),
+                    "event_starts_at_time": event_start.strftime("%I:%M"),
+                    "event_title": event_title,
+                    "event_venue": event['Location'] if ("Location" in event and event['Location']) else event['meetingType'],
+                    "event_is_approved": "1",
+                    "event_host_is_confirmed": "1",
+                    "name": "Team Internet",
+                    "phone": "000-000-0000",
+                    "zip": parsed_address['ZipCode'] if "ZipCode" in parsed_address else "",
+                    "action_town_hall_project_event_id": event['eventId'],
+                    "action_categories": event['meetingType'].lower().replace(" ", "").replace("-", "")
+                }
+                print "Adding new event to AK: " + str(ak_event)
+                action_endpoint = os.environ.get('ACTION_KIT_REST_URL') + "action/"
+                req = requests.post(action_endpoint, data = ak_event, headers = {"Access": 'application/json'})
+                if req.status_code != 201:
+                    raise ValueError("Error creating town hall event in Action Kit ", req.status_code, req.text, ak_event, event)
+                else:
+                    print "Successfully created event! "
+            # EO add new event
+        # EO for event_id in events
+    return 1
 
 def retrieve_and_clean_data():
     """

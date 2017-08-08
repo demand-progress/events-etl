@@ -10,7 +10,7 @@ import gzip
 def run():
     data = teaminternet_action.grab_data()
     raw = json.dumps(data)
-    content = 'window.TEAMINTERNET_EVENTS=' + json.dumps(data)
+    content = 'window.TEAMINTERNET_EVENTS=' + raw
 
     # Locally Store Data
     with gzip.open('data/teaminternet.js.gz', 'wb') as f:

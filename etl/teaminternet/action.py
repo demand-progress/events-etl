@@ -92,7 +92,7 @@ def retrieve_town_hall_events(current_ak_events):
             street_address = (parsed_address['AddressNumber'] if "AddressNumber" in parsed_address else "") + " " + (parsed_address["StreetNamePreDirectional"] if "StreetNamePreDirectional" in parsed_address else "") + " " + (parsed_address['StreetName'] if "StreetName" in parsed_address else "") + " " + (parsed_address['StreetNamePostType'] if "StreetNamePostType" in parsed_address else "")
 
             try :
-                event_start = dateutil.parser.parse(event['Date'] + " " + event["Time"] + (" " + event['timeZone'] if 'timeZone' in event else ""))
+                event_start = dateutil.parser.parse(event['Date'] + " " + event["timeStart24"] + (" " + event['timeZone'] if 'timeZone' in event else ""))
             except ValueError as error:
                 print ("Error parsing datetime: " + repr(error))
                 print event
@@ -106,8 +106,8 @@ def retrieve_town_hall_events(current_ak_events):
             event_description = event_title + "\n"
             if "Notes" in event:
                 event_description += event["Notes"]
-            if "timeEnd" in event and event['timeEnd']:
-                event_description += "\n\nEvent ends at " + event['timeEnd']
+            if "timeEnd24" in event and event['timeEnd24']:
+                event_description += "\n\nEvent ends at " + event['timeEnd24']
             if "linkName" in event:
                 event_description += "\n\n" + event['linkName'] + ": " + event['link']
 

@@ -6,6 +6,7 @@ import boto3
 import os
 import json
 import gzip
+import uuid
 
 def run():
     data = teaminternet_action.grab_data()
@@ -25,14 +26,22 @@ def run():
     s3.upload_file('data/teaminternet.json', 'teaminternet-map-data', 'raw/teaminternet.json', ExtraArgs={'ACL': 'public-read'})
 
     # Cloudfront Invalidation requests
-    # print("Invalidating Team Internet Output")
-    # cloudfront = boto.connect_cloudfront()
-    # paths = ['/output/*']
-    # inval_req = cloudfront.create_invalidation_request(u'EXFHJXIFH495H', paths)
+    print("Invalidating Team Internet Output")
+    cloudfront = boto3.client('cloudfront')
+
+    response = cloudfront.create_invalidation(
+        DistributionId='E3EMIL33V1TDMO',
+        InvalidationBatch={
+            'Paths': {
+                'Quantity': 2,
+                'Items': ['/output/*', '/raw/*']
+            },
+            'CallerReference': str(uuid.uuid1())
+        }
+    )
 
     os.remove("data/teaminternet.js.gz")
     os.remove("data/teaminternet.json")
-
 
 # Retrieve all data
 

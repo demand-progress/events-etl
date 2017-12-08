@@ -99,7 +99,9 @@ def retrieve_town_hall_events(current_ak_events):
                 print "\n"
                 continue
 
-            if event_start < datetime.datetime.now(event_start.tzinfo): # ignore past events
+            # temporarily show all events from Dec 6 on
+            #if event_start < datetime.datetime.now(event_start.tzinfo): # ignore past events
+            if event_start < datetime.datetime(2017, 12, 6, 0, 9, 0, 0, event_start.tzinfo):
                 continue
 
             event_title = (event['eventName'] if ('eventName' in event) else event['meetingType']) + (" - " + event['Member'] if ("Member" in event) else "") + (" - " + event['District'] if ("District" in event) else "")

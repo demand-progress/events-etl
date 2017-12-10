@@ -99,9 +99,8 @@ def retrieve_town_hall_events(current_ak_events):
                 print "\n"
                 continue
 
-            # temporarily show all events from Dec 6 on
-            #if event_start < datetime.datetime.now(event_start.tzinfo): # ignore past events
-            if event_start < datetime.datetime(2017, 12, 6, 0, 9, 0, 0, event_start.tzinfo):
+
+            if event_start < datetime.datetime.now(event_start.tzinfo): # ignore past events
                 continue
 
             event_title = (event['eventName'] if ('eventName' in event) else event['meetingType']) + (" - " + event['Member'] if ("Member" in event) else "") + (" - " + event['District'] if ("District" in event) else "")
@@ -244,7 +243,9 @@ def translate_data(cleaned_data):
         if not has_coords:
             continue
 
-        if data['starts_at'][:10] < datetime.date.today().strftime('%Y-%m-%d'):
+        # ignore past events
+        #  but temporarily show all events from Dec 6 on
+        if data['starts_at'][:10] < datetime.datetime(2017, 12, 6, 0, 0).strftime('%Y-%m-%d'):
             continue
 
         categories = []

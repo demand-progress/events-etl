@@ -243,9 +243,9 @@ def translate_data(cleaned_data):
         if not has_coords:
             continue
 
-        # ignore past events
-        #  but temporarily show all events from Dec 6 on
-        if data['starts_at'][:10] < datetime.datetime(2017, 12, 6, 0, 0).strftime('%Y-%m-%d'):
+        # ignore events older than 24 hours ago
+        yesterday = datetime.date.today() - datetime.timedelta(1)
+        if data['starts_at'][:10] < yesterday.strftime('%Y-%m-%d'):
             continue
 
         categories = []

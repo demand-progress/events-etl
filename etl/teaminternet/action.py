@@ -66,11 +66,17 @@ def retrieve_town_hall_events(current_ak_events):
         for event_id in events:
             event = events[event_id]
 
+            if "meetingType" not in event:
+                print "Missing meetingType for event: "
+                print event
+                print "\n"
+                continue
+
             if event['meetingType'] not in ['Office Hours', "Town Hall", "Tele-Town Hall", "Empty Chair Town Hall"]:
                 continue
 
             if "address" not in event:
-                print "Missing address: "
+                print "Missing address for event: "
                 print event
                 print "\n"
                 continue

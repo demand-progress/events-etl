@@ -33,7 +33,7 @@ def grab_data():
     cleaned_data = retrieve_and_clean_data()
     translated_data = translate_data(cleaned_data)
 
-    retrieve_town_hall_events(cleaned_data)
+    # retrieve_town_hall_events(cleaned_data)
 
     return translated_data
 

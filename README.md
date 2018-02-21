@@ -24,7 +24,7 @@ $ heroku local
 
 Your app should now be running on [localhost:5000](http://localhost:5000/).
 
-## Deploying to Heroku
+# Creating Heroku App
 
 ```sh
 $ heroku create
@@ -36,6 +36,12 @@ $ heroku open
 or
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+
+# Deploying changes to Heroku
+```sh
+$ heroku create
+$ git push heroku master
+```
 
 # Setting Up ETL
 

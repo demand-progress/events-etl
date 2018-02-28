@@ -277,8 +277,7 @@ def translate_data(cleaned_data):
         }
 
         translated_data.append(event)
-        continue
-        
+
     return translated_data
 
 def clean_venue(location):

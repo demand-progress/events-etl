@@ -34,7 +34,7 @@ def grab_data():
 
     translated_data = translate_data(cleaned_data)
 
-    retrieve_town_hall_events(cleaned_data)
+    # retrieve_town_hall_events(cleaned_data)
 
     return translated_data
 
@@ -240,44 +240,48 @@ def translate_data(cleaned_data):
     print(" -- Translating Team Internet Event")
     translated_data = []
 
-    for data in cleaned_data:  
-        
-        address = clean_venue(data)
+    eventsId = [2866, 2867, 2868, 2869, 2870, 2871]
 
-        group_name = data['title']
-        has_coords = 'latitude' in data and 'longitude' in data
+    for data in cleaned_data:
+        if data['id'] in eventsId:  
 
-        if not has_coords:
+            address = clean_venue(data)
+
+            group_name = data['title']
+            has_coords = 'latitude' in data and 'longitude' in data
+
+            if not has_coords:
+                continue
+
+            # ignore events older than 24 hours ago
+            yesterday = datetime.date.today() - datetime.timedelta(1)
+            if data['starts_at'][:10] < yesterday.strftime('%Y-%m-%d'):
+                continue
+
+            categories = []
+            for field in data['fields']:
+                if field['name'] == 'categories':
+                    categories.append(field['value'])
+            
+            event = {
+                'id': data['id'],
+                'title': data[_TITLE] if _TITLE in data else None,
+                'url': _PREURL + ("%d" % data['id']),
+                'supergroup' : SUPER_GROUP,
+                'group': group_name,
+                'event_type': EVENT_TYPE,
+                'start_datetime': data[_STARTDATE] if _STARTDATE in data else None,
+                'venue': address,
+                'lat': data['latitude'] if has_coords else None,
+                'lng': data['longitude'] if has_coords else None,
+                'categories': ','.join(categories),
+                'max_attendees': data['max_attendees'],
+                'attendee_count': data['attendee_count']
+            }
+
+            translated_data.append(event)
             continue
 
-        # ignore events older than 24 hours ago
-        yesterday = datetime.date.today() - datetime.timedelta(1)
-        if data['starts_at'][:10] < yesterday.strftime('%Y-%m-%d'):
-            continue
-
-        categories = []
-        for field in data['fields']:
-            if field['name'] == 'categories':
-                categories.append(field['value'])
-        
-        event = {
-            'id': data['id'],
-            'title': data[_TITLE] if _TITLE in data else None,
-            'url': _PREURL + ("%d" % data['id']),
-            'supergroup' : SUPER_GROUP,
-            'group': group_name,
-            'event_type': EVENT_TYPE,
-            'start_datetime': data[_STARTDATE] if _STARTDATE in data else None,
-            'venue': address,
-            'lat': data['latitude'] if has_coords else None,
-            'lng': data['longitude'] if has_coords else None,
-            'categories': ','.join(categories),
-            'max_attendees': data['max_attendees'],
-            'attendee_count': data['attendee_count']
-        }
-
-        translated_data.append(event)
-       
     return translated_data
 
 def clean_venue(location):

@@ -276,7 +276,9 @@ def translate_data(cleaned_data):
             'attendee_count': data['attendee_count']
         }
 
-        translated_data.append(event)
+        if event['categories'] != 'townhall':
+            translated_data.append(event)
+            continue
         
     return translated_data
 

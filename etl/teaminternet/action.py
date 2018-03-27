@@ -276,10 +276,10 @@ def translate_data(cleaned_data):
             'attendee_count': data['attendee_count']
         }
 
-        if event['categories'] != 'townhall':
+        if event['categories'] != 'townhall' and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
             translated_data.append(event)
             continue
-        
+    
     return translated_data
 
 def clean_venue(location):

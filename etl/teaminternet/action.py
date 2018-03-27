@@ -31,6 +31,7 @@ TOWN_HALL_URL = "https://townhallproject-86312.firebaseio.com/townHalls.json"
 
 def grab_data():
     cleaned_data = retrieve_and_clean_data()
+
     translated_data = translate_data(cleaned_data)
 
     # retrieve_town_hall_events(cleaned_data)
@@ -40,7 +41,6 @@ def grab_data():
 def retrieve_town_hall_events(current_ak_events):
     redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
     redis_conn = redis.from_url(redis_url)
-
     last_updated = redis_conn.get("town_hall_last_updated")
 
     if last_updated:
@@ -241,6 +241,7 @@ def translate_data(cleaned_data):
     translated_data = []
 
     for data in cleaned_data:
+
         address = clean_venue(data)
 
         group_name = data['title']
@@ -258,7 +259,7 @@ def translate_data(cleaned_data):
         for field in data['fields']:
             if field['name'] == 'categories':
                 categories.append(field['value'])
-
+        
         event = {
             'id': data['id'],
             'title': data[_TITLE] if _TITLE in data else None,
@@ -275,8 +276,10 @@ def translate_data(cleaned_data):
             'attendee_count': data['attendee_count']
         }
 
-        translated_data.append(event)
-
+        if event['categories'] != 'townhall' and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
+            translated_data.append(event)
+            continue
+    
     return translated_data
 
 def clean_venue(location):

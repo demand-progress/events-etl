@@ -276,7 +276,7 @@ def translate_data(cleaned_data):
             'attendee_count': data['attendee_count']
         }
         
-        if event['id'] != 3043 and event['categories'] != 'townhall' and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
+        if event['id'] != 3043 and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
     
             translated_data.append(event)
             continue

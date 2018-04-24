@@ -275,9 +275,15 @@ def translate_data(cleaned_data):
             'max_attendees': data['max_attendees'],
             'attendee_count': data['attendee_count']
         }
+<<<<<<< HEAD
   
         if event['id'] != 3043 and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
     
+=======
+
+        if event['id'] != 3043 and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
+
+>>>>>>> Update to not allow townhall events.
             translated_data.append(event)
             continue
 

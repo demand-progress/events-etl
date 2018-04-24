@@ -277,7 +277,7 @@ def translate_data(cleaned_data):
         }
 
         if event['id'] != 3043 and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
-    
+
             translated_data.append(event)
             continue
 

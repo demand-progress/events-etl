@@ -275,9 +275,9 @@ def translate_data(cleaned_data):
             'max_attendees': data['max_attendees'],
             'attendee_count': data['attendee_count']
         }
-
+  
         if event['id'] != 3043 and event['categories'] != 'officehours' and event['categories'] != 'emptychairtownhall':
-
+    
             translated_data.append(event)
             continue
 
